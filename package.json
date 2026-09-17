@@ -11,16 +11,10 @@
 		"@discordjs/builders": "1.14.1",
 		"@discordjs/collection": "^1.5.0",
 		"@discordjs/rest": "2.6.3",
-		"@discordjs/voice": "^0.17.0",
 		"common-tags": "^1.8.2",
 		"discord-api-types": "0.37.120",
 		"discord.js": "14.27.0",
-		"dotenv": "16.4.7",
-		"moment": "^2.29.4",
-		"node-kitsu": "^1.1.1",
-		"node-superfetch": "^0.2.3",
-		"superagent": "^9.0.2",
-		"undici": "^5.22.0"
+		"dotenv": "16.4.7"
 	},
 	"devDependencies": {
 		"@hazmi35/eslint-config": "^9.0.0",

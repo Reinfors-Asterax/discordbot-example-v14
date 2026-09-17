@@ -1,6 +1,5 @@
 const Command = require('../../structures/CommandClass');
 const information = require('../../assets/json/information');
-const kitsu = require('node-kitsu');
 
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, StringSelectMenuBuilder, InteractionContextType, MessageFlags } = require('discord.js');
@@ -174,7 +173,13 @@ module.exports = class Info extends Command {
 				const find = interaction.options.getString('anime');
 
 				try {
-					const result = await kitsu.searchAnime(find.replace(/ ,/g, ' '), 0);
+					const res = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(find.replace(/ ,/g, ' '))}&page[offset]=0`, {
+						headers: {
+							'Accept': 'application/vnd.api+json',
+						},
+					});
+					const json = await res.json();
+					const result = json.data;
 					if (!result || !result.length) {
 						return await interaction.editReply({ content: 'No anime found matching your search.' });
 					}

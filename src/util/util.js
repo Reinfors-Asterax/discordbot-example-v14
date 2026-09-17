@@ -1,4 +1,3 @@
-const snek = require('node-superfetch');
 const nodeVersion = process.version.slice(1, 3);
 const MONEY = ['', 'k', 'M', 'G', 'T', 'P', 'E'];
 const yes = ['yes', 'y', 'ye', 'yeah', 'yup', 'yea', 'ya'];
@@ -126,8 +125,12 @@ class Util {
 	 * @returns {Promise<string>} - The URL of the uploaded text.
 	 */
 	static async hastebin(text) {
-		const { body } = await snek.post('https://www.hastebin.com/documents')
-			.send(text);
+		const res = await fetch('https://www.hastebin.com/documents', {
+			method: 'POST',
+			body: text,
+			headers: { 'Content-Type': 'text/plain' },
+		});
+		const body = await res.json();
 		return `https://www.hastebin.com/${body.key}`;
 	}
 
@@ -226,7 +229,8 @@ class Util {
 	static async scrapeSubreddit(subreddit) {
 		try {
 			subreddit = typeof subreddit === 'string' && subreddit.length !== 0 ? subreddit : 'puppies';
-			const { body } = await snek.get(`https://imgur.com/r/${subreddit}/hot.json`);
+			const res = await fetch(`https://imgur.com/r/${subreddit}/hot.json`);
+			const body = await res.json();
 			if (!body.data || !body.data.length) return undefined;
 			const img = body.data[Math.floor(Math.random() * body.data.length)];
 			return `http://imgur.com/${img.hash}${img.ext.replace(/\?.*/, '')}`;
