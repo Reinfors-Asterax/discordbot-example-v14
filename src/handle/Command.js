@@ -49,7 +49,7 @@ module.exports = class CommandClass {
                     // Create a command object with necessary properties
                     const cmdSet = {
                         name: cmdData.name, // The name of the command
-                        description: cmdData.description, // Description of the command
+                        description: cmdData.description || cmd.contextDescription || 'Context menu command', // Description of the command
                         options: cmdData.options, // Command options (parameters)
                         defaultPermission: cmdData.default_permission, // Default permission for the command
                         contextDescription: cmd.contextDescription, // Context menu description (if applicable)

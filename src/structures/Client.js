@@ -48,35 +48,35 @@ module.exports = class Bot extends Client {
 			],
 		});
 
-        // Load configuration and utility files
-        this.config = require('../util/config.js');
-        this.util = require('../util/util.js');
-        this.embeds = require('../../src/assets/json/embeds');
+		// Load configuration and utility files
+		this.config = require('../util/config.js');
+		this.util = require('../util/util.js');
+		this.embeds = require('../../src/assets/json/embeds');
 
-        // Initialize Collections to store commands, events, and helps
-        this.helps = new Collection();
-        this.commands = new Collection();
-        this.events = new Collection();
+		// Initialize Collections to store commands, events, and helps
+		this.helps = new Collection();
+		this.commands = new Collection();
+		this.events = new Collection();
 
-        // Instantiate and build the event and command handlers
-        new EventHandler(this).build('../events/global');
-        new CommandHandler(this).build('../commands');
-    }
+		// Instantiate and build the event and command handlers
+		new EventHandler(this).build('../events/global');
+		new CommandHandler(this).build('../commands');
+	}
 
-    // Method to log in to Discord using the bot token
-    async login() {
-        await super.login(process.env.TOKEN); // Use the token from environment variables
-    }
+	// Method to log in to Discord using the bot token
+	async login() {
+		await super.login(process.env.TOKEN); // Use the token from environment variables
+	}
 
-    // Method to gracefully shut down the bot
-    exit() {
-        if (this.quitting) return; // Prevent multiple shutdown attempts
-        this.quitting = true;
-        this.destroy(); // Close the bot connection and clean up resources
-    }
+	// Method to gracefully shut down the bot
+	exit() {
+		if (this.quitting) return; // Prevent multiple shutdown attempts
+		this.quitting = true;
+		this.destroy(); // Close the bot connection and clean up resources
+	}
 
-    // Method to fetch a command by its name
-    fetchCommand(cmd) {
-        return this.commands.get(cmd); // Retrieve the command from the commands collection
-    }
+	// Method to fetch a command by its name
+	fetchCommand(cmd) {
+		return this.commands.get(cmd); // Retrieve the command from the commands collection
+	}
 };

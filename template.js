@@ -69,3 +69,33 @@ module.exports = class Example extends Event {
 	}
 };
 
+// Context Menu Template (User or Message)
+// This template is designed to help you create context menu commands (Right-Click > Apps).
+// To use this template:
+// 1. Set .setType(ApplicationCommandType.User) for user context menus, OR
+//    Set .setType(ApplicationCommandType.Message) for message context menus.
+// 2. In run(), access interaction.targetUser (for User menus) or interaction.targetMessage (for Message menus).
+
+const { ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
+
+module.exports = class ExampleContextMenu extends Command {
+	constructor(client) {
+		super(client, {
+			data: new ContextMenuCommandBuilder()
+				.setName('Example Context Menu') // Name shown in Right-Click > Apps menu
+				.setType(ApplicationCommandType.User) // ApplicationCommandType.User or ApplicationCommandType.Message
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel),
+			contextDescription: 'Description of what this context menu does',
+			usage: 'Right-Click User > Apps > Example Context Menu',
+			category: 'Context',
+			permissions: ['Use Application Commands', 'Send Messages', 'Embed Links'],
+			hidden: false,
+		});
+	}
+
+	async run(client, interaction) {
+		// For User menus: interaction.targetUser and interaction.targetMember
+		// For Message menus: interaction.targetMessage
+		await interaction.reply({ content: `Interacted with ${interaction.targetUser ? interaction.targetUser.username : interaction.targetMessage?.id}` });
+	}
+};
