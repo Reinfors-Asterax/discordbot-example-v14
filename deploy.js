@@ -8,10 +8,6 @@ require('dotenv').config(); // Load environment variables from a .env file
 const deploy = async () => {
     const commandData = []; // Array to hold the data for commands
 
-    // Define counters for updated and unchanged commands
-    let updatedCommands = 0;
-    let unchangedCommands = 0;
-
     // Read all categories from the commands directory
     fs.readdirSync('./src/commands/').forEach(category => {
         // Read all command files within each category
@@ -23,40 +19,23 @@ const deploy = async () => {
             const cmd = new Command();
             const cmdData = cmd.data.toJSON(); // Convert command data to JSON format
             commandData.push(cmdData); // Add command data to the commandData array
-
-            // Check if the command already exists in the commandData array
-            const existingCommand = commandData.find(c => c.name === cmdData.name);
-            if (existingCommand) {
-                // Compare the existing command's JSON representation with the new command's JSON representation
-                if (JSON.stringify(existingCommand) !== JSON.stringify(cmdData)) {
-                    // Command has been updated
-                    updatedCommands++;
-                }
-                else {
-                    // Command is unchanged
-                    unchangedCommands++;
-                }
-            }
         }
     });
 
     // Create a new REST client instance with the Discord API version and token
-    const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
     try {
         const clientId = process.env.CLIENTID; // Get the client ID from environment variables
 
-        console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Started refreshing Slash Commands and Context Menus...`);
+        console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Started refreshing ${commandData.length} Slash Commands and Context Menus...`);
 
         // Deploy the command data to Discord
         await rest.put(
             Routes.applicationCommands(clientId),
             { body: commandData },
-        ).then(() => {
-            console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Slash Commands and Context Menus have now been deployed globally.`);
-            console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Updated Commands: ${updatedCommands}`);
-            console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Unchanged Commands: ${unchangedCommands}`);
-        });
+        );
+        console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Successfully deployed ${commandData.length} Slash Commands and Context Menus globally.`);
     }
     catch (e) {
         // Log any errors that occur during deployment

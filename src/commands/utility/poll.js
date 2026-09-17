@@ -1,7 +1,7 @@
 const Command = require('../../structures/CommandClass');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, InteractionContextType } = require('discord.js');
 
 module.exports = class Poll extends Command {
 	constructor(client) {
@@ -9,7 +9,7 @@ module.exports = class Poll extends Command {
 			data: new SlashCommandBuilder()
 				.setName('poll')
 				.setDescription('Create quick polls in Discord')
-				.setDMPermission(true)
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel)
 				.addStringOption(option => option
 					.setName('question')
 					.setDescription('The poll question')

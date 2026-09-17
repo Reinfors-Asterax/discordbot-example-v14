@@ -1,6 +1,6 @@
 const Command = require('../../structures/CommandClass');
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, InteractionContextType } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { stripIndents } = require('common-tags');
 
@@ -10,7 +10,7 @@ module.exports = class Ping extends Command {
 			data: new SlashCommandBuilder()
 				.setName('ping')
 				.setDescription('Returns the bot ping.')
-				.setDMPermission(true),
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel),
 			usage: 'ping',
 			category: 'Information',
 			permissions: ['Use Application Commands', 'Send Messages', 'Embed Links'],

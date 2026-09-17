@@ -8,7 +8,7 @@
 
 // - **Command Name**: Set the command's name using the `.setName()` method.
 // - **Command Description**: Provide a brief description of what the command does with `.setDescription()`.
-// - **DM Permission**: Use `.setDMPermission(true)` if the command can be used in DMs.
+// - **Contexts**: Use `.setContexts(...)` with `InteractionContextType` to configure where the command can be used (e.g. Guild, BotDM, PrivateChannel).
 // - **Usage Information**: Specify how to use the command in the `usage` property (e.g., `ping`).
 // - **Command Category**: Indicate the category this command belongs to (e.g., `Utility`, `Moderation`).
 // - **Permissions Required**: Define which permissions are needed to use this command in the `permissions` array.
@@ -19,6 +19,7 @@
 
 const Command = require('../../structures/CommandClass');
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const { InteractionContextType } = require('discord.js');
 
 module.exports = class Example extends Command {
 	constructor(client) {
@@ -26,7 +27,7 @@ module.exports = class Example extends Command {
 			data: new SlashCommandBuilder()
 				.setName('') // Set the command name here
 				.setDescription('') // Set the command description here
-				.setDMPermission(true), // Allow the command in DMs
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel), // Specify allowed contexts
 			usage: '', // Usage format for the command
 			category: '', // Category of the command
 			permissions: ['Use Application Commands', 'Send Messages', 'Embed Links'], // Required permissions
@@ -55,12 +56,12 @@ module.exports = class Example extends Command {
 const Event = require('../../structures/EventClass');
 
 module.exports = class Example extends Event {
-    constructor(client) {
-        super(client, {
-            name: '', // Set the event name here
-            category: '', // Specify the category of the event
-        });
-    }
+	constructor(client) {
+		super(client, {
+			name: '', // Set the event name here
+			category: '', // Specify the category of the event
+		});
+	}
 
 	async run() {
 		// Implement your event handling logic here.

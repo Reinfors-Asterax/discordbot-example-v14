@@ -1,6 +1,6 @@
 const Command = require('../../structures/CommandClass');
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, InteractionContextType } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { stripIndents } = require('common-tags');
 const { version } = require('../../../package.json');
@@ -11,7 +11,7 @@ module.exports = class Stats extends Command {
 			data: new SlashCommandBuilder()
 				.setName('stats')
 				.setDescription('Check statistics of the bot')
-				.setDMPermission(true),
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel),
 			usage: 'stats',
 			category: 'Information',
 			permissions: ['Use Application Commands', 'Send Messages', 'Embed Links'],

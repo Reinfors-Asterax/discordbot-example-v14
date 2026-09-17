@@ -1,5 +1,5 @@
 // Import necessary classes from the discord.js library
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
 // Import the Collection class from the @discordjs/collection package
 const { Collection } = require('@discordjs/collection');
 
@@ -10,24 +10,20 @@ const EventHandler = require('../handle/Events');
 // Define and export the Bot class, which extends the Client class from discord.js
 module.exports = class Bot extends Client {
     // Constructor method for initializing the bot instance
-    constructor(...opt) {
+    constructor(options = {}) {
         // Call the parent Client constructor with options and intents
         super({
-            opt, // Pass additional options
+            ...options, // Pass additional options
             partials: [
-                'GUILD_MEMBERS', // To receive events related to guild members (such as joins or leaves)
-                'MESSAGE', // To receive partial message data
-                'CHANNEL', // To receive partial channel data
-                'USER', // To receive partial user data
+                Partials.GuildMember, // To receive events related to guild members (such as joins or leaves)
+                Partials.Message, // To receive partial message data
+                Partials.Channel, // To receive partial channel data
+                Partials.User, // To receive partial user data
             ],
             intents: [
                 GatewayIntentBits.Guilds, // Required for general guild (server) events
-                GatewayIntentBits.GuildVoiceStates, // Required for voice state changes (e.g., user joins/leaves a voice channel)
-                GatewayIntentBits.GuildMembers, // Required to receive member updates
                 GatewayIntentBits.GuildMessages, // Required for receiving message events
-                GatewayIntentBits.GuildMessageReactions, // Required for receiving reaction events on messages
-                GatewayIntentBits.GuildEmojisAndStickers, // Required to receive events related to emojis and stickers
-                GatewayIntentBits.GuildIntegrations, // Required for integration events (e.g., linked accounts)
+                GatewayIntentBits.GuildMessageReactions, // Required for poll/help reaction events
             ],
         });
 

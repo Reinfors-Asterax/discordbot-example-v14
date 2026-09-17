@@ -1,5 +1,5 @@
 const Command = require('../../structures/CommandClass');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, InteractionContextType } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 module.exports = class Avatar extends Command {
@@ -8,7 +8,7 @@ module.exports = class Avatar extends Command {
 			data: new SlashCommandBuilder()
 				.setName('avatar')
 				.setDescription('Show your or others avatar')
-				.setDMPermission(true)
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel)
 				.addUserOption(option => option.setName('user')
 					.setDescription('The user you want to view its avatar')
 					.setRequired(false)),
@@ -19,13 +19,13 @@ module.exports = class Avatar extends Command {
 		});
 	}
 
-	run(client, interaction) {
+	async run(client, interaction) {
 		const user = interaction.options.getUser('user') || interaction.user;
 		const embed = new EmbedBuilder()
 			.setTitle(`${user.tag} Avatar`)
-			.setImage(user.displayAvatarURL({ dynamic: true, size: 2048 }))
+			.setImage(user.displayAvatarURL({ size: 2048 }))
 			.setColor('Random');
 
-		interaction.reply({ embeds: [embed] });
+		await interaction.reply({ embeds: [embed] });
 	}
 };

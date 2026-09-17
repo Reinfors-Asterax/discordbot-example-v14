@@ -9,10 +9,7 @@ require('dotenv').config();
 const deploy = async () => {
 	const commandData = [];
 
-	// Define counters for updated and unchanged commands
-	let updatedCommands = 0;
-	let unchangedCommands = 0;
-
+	// Read all categories from the commands directory
 	fs.readdirSync('./src/commands/').forEach(category => {
 		const commands = fs.readdirSync(`./src/commands/${category}/`).filter(cmd => cmd.endsWith('.js'));
 
@@ -21,38 +18,21 @@ const deploy = async () => {
 			const cmd = new Command();
 			const cmdData = cmd.data.toJSON();
 			commandData.push(cmdData);
-
-			// Check if the command already exists in the commandData array
-			const existingCommand = commandData.find(c => c.name === cmdData.name);
-			if (existingCommand) {
-				// Compare the existing command's JSON representation with the new command's JSON representation
-				if (JSON.stringify(existingCommand) !== JSON.stringify(cmdData)) {
-					// Command has been updated
-					updatedCommands++;
-				}
-				else {
-					// Command is unchanged
-					unchangedCommands++;
-				}
-			}
 		}
 	});
 
-	const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
+	const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 	try {
 		const clientId = process.env.CLIENTID;
 
-		console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Started refreshing Slash Commands and Context Menus...`);
+		console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Started refreshing ${commandData.length} Slash Commands and Context Menus...`);
 
 		await rest.put(
 			Routes.applicationCommands(clientId),
 			{ body: commandData },
-		).then(() => {
-			console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Slash Commands and Context Menus have now been deployed globally.`);
-			console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Updated Commands: ${updatedCommands}`);
-			console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Unchanged Commands: ${unchangedCommands}`);
-		});
+		);
+		console.log(`[${new Date().toString().split(' ', 5).join(' ')}] Successfully deployed ${commandData.length} Slash Commands and Context Menus globally.`);
 	}
 	catch (e) {
 		console.error(e);

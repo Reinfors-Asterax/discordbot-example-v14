@@ -31,7 +31,7 @@ module.exports = class CommandClass {
 
             // If the file is a directory, recursively build commands from it
             if (stat.isDirectory()) {
-                this.build(path.join(dir, file));
+                await this.build(path.join(dir, file));
             }
             // If the file is a JavaScript file, process it as a command
             if (file.endsWith('.js')) {

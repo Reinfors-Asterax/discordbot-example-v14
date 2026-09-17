@@ -3,7 +3,7 @@ const information = require('../../assets/json/information');
 const kitsu = require('node-kitsu');
 
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, StringSelectMenuBuilder, InteractionContextType, MessageFlags } = require('discord.js');
 
 module.exports = class Info extends Command {
 	constructor(client) {
@@ -11,6 +11,7 @@ module.exports = class Info extends Command {
 			data: new SlashCommandBuilder()
 				.setName('info')
 				.setDescription('See the information')
+				.setContexts(InteractionContextType.Guild, InteractionContextType.BotDM, InteractionContextType.PrivateChannel)
 				.addSubcommand(subcommand => subcommand
 					.setName('server')
 					.setDescription('See information about current server'))
@@ -25,226 +26,247 @@ module.exports = class Info extends Command {
 					.setDescription('See information about a role')
 					.addRoleOption(option => option
 						.setName('role')
-						.setDescription('The role you want to check')))
+						.setDescription('The role you want to check')
+						.setRequired(true)))
 				.addSubcommand(subcommand => subcommand
 					.setName('emotelist')
-					.setDescription('Show list of the server emote.'),
-				)
+					.setDescription('Show list of the server emote.'))
 				.addSubcommand(subcommand => subcommand
 					.setName('anime')
 					.setDescription('See information about anime')
 					.addStringOption(option => option
 						.setName('anime')
-						.setDescription('The anime information you want to check.'))),
-			usage: 'info',
+						.setDescription('The anime information you want to check.')
+						.setRequired(true))),
+			usage: 'info <subcommand>',
 			category: 'Information',
 			permissions: ['Use Application Commands', 'Send Messages', 'Embed Links'],
 			hidden: false,
 		});
 	}
-	async run(client, interaction) {
 
+	async run(client, interaction) {
 		const subcommand = interaction.options.getSubcommand();
 
-		const user = interaction.options.getUser('user') || interaction.user;
-		const member = interaction.guild.members.cache.get(user.id) || await interaction.guild.members.fetch(user.id);
-		const role = interaction.options.getRole('role');
-		const find = interaction.options.getString('anime');
-
-		const guildFeatures = interaction.guild.features.map(feature => information.features[feature]).join(', ');
-		const verificationLevels = information.verify[interaction.guild.verificationLevel];
-		const afkTimeout = information.afkTimeout[interaction.guild.afkTimeout];
-		const owner = await interaction.client.users.fetch(interaction.guild.ownerId);
-
 		switch (subcommand) {
-		case 'user': {
-			const embed = new EmbedBuilder()
-				.setColor('Random')
-				.setThumbnail(user.displayAvatarURL({ dynamic: true, size: 2048 }))
-				.setTitle(`${user.username}'s information`)
-				.addFields({
-					name: '__Basic Account Information__',
-					value: `
-                • **ID »** ${user.id}
-                • **Bot »** ${information.bot[user.bot]}
-                • **Account Creation »** <t:${Math.floor(member.user.createdAt.getTime() / 1000)}:f>
-                • **Account Age »** ${Math.floor((Date.now() - member.user.createdAt) / (1000 * 60 * 60 * 24))} Days
-                `,
-				})
-				.addFields({
-					name: '__Member Information__',
-					value: `
-                • **Nickname »** ${member.nickname ? `${member.nickname}` : 'No Nickname Set'}
-                • **Joined At »** <t:${Math.floor(member.joinedAt.getTime() / 1000)}:f>
-                `,
-				});
+			case 'user': {
+				const targetUser = interaction.options.getUser('user') || interaction.user;
+				const member = interaction.guild ? (interaction.guild.members.cache.get(targetUser.id) || await interaction.guild.members.fetch(targetUser.id).catch(() => null)) : null;
 
-			interaction.reply({ embeds: [embed] });
-			break;
-		}
-		case 'server': {
-			const embed = new EmbedBuilder()
-				.setTitle(`${interaction.guild.name} Information`)
-				.setColor('Random')
-				.setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-				.addFields({
-					name: '__Basic Information__',
-					value: `
+				const embed = new EmbedBuilder()
+					.setColor('Random')
+					.setThumbnail(targetUser.displayAvatarURL({ size: 2048 }))
+					.setTitle(`${targetUser.username}'s information`)
+					.addFields({
+						name: '__Basic Account Information__',
+						value: `
+                • **ID »** ${targetUser.id}
+                • **Bot »** ${information.bot[targetUser.bot]}
+                • **Account Creation »** <t:${Math.floor(targetUser.createdAt.getTime() / 1000)}:f>
+                • **Account Age »** ${Math.floor((Date.now() - targetUser.createdAt.getTime()) / (1000 * 60 * 60 * 24))} Days
+                `,
+					});
+
+				if (member) {
+					embed.addFields({
+						name: '__Member Information__',
+						value: `
+                • **Nickname »** ${member.nickname ? member.nickname : 'No Nickname Set'}
+                • **Joined At »** ${member.joinedAt ? `<t:${Math.floor(member.joinedAt.getTime() / 1000)}:f>` : 'Unknown'}
+                `,
+					});
+				}
+
+				return await interaction.reply({ embeds: [embed] });
+			}
+			case 'server': {
+				if (!interaction.guild) {
+					return await interaction.reply({ content: 'This subcommand can only be used in a server.', flags: MessageFlags.Ephemeral });
+				}
+
+				const owner = await interaction.client.users.fetch(interaction.guild.ownerId).catch(() => null);
+				const guildFeatures = interaction.guild.features.map(feature => information.features[feature] || feature).join(', ') || 'None';
+				const verificationLevels = information.verify[interaction.guild.verificationLevel] || interaction.guild.verificationLevel;
+				const afkTimeout = information.afkTimeout[interaction.guild.afkTimeout] || 'None';
+
+				const embed = new EmbedBuilder()
+					.setTitle(`${interaction.guild.name} Information`)
+					.setColor('Random')
+					.setThumbnail(interaction.guild.iconURL())
+					.addFields(
+						{
+							name: '__Basic Information__',
+							value: `
             • **ID »** ${interaction.guild.id}
             • **Created »** <t:${Math.floor(interaction.guild.createdAt.getTime() / 1000)}:f>
-            • **Owner »** ${owner.username || 'Unknown'} [${interaction.guild.ownerId || 'Unknown'}]
+            • **Owner »** ${owner ? owner.username : 'Unknown'} [${interaction.guild.ownerId}]
             • **Verification »** ${verificationLevels}
-            • **Total Role »** ${interaction.guild.roles.cache.size}
+            • **Total Roles »** ${interaction.guild.roles.cache.size}
             `,
-				})
-				.addFields({
-					name: '__Members Information__',
-					value: `
+						},
+						{
+							name: '__Members Information__',
+							value: `
             • **Users »** ${interaction.guild.memberCount - interaction.guild.members.cache.filter(x => x.user.bot).size}
             • **Bots »** ${interaction.guild.members.cache.filter(n => n.user.bot).size}
             `,
-				})
-				.addFields({
-					name: '__Channels Information__',
-					value: `
+						},
+						{
+							name: '__Channels Information__',
+							value: `
             • **Total Channels »** ${interaction.guild.channels.cache.size}
-            • **AFK Channel »** ${interaction.guild.afkChannel || 'None'}
+            • **AFK Channel »** ${interaction.guild.afkChannel ? interaction.guild.afkChannel.name : 'None'}
             • **AFK Timeout »** ${afkTimeout}
             `,
-				})
-				.addFields({
-					name: 'Guild Features',
-					value: `
-            ${guildFeatures}
-            `,
-				});
+						},
+						{
+							name: 'Guild Features',
+							value: guildFeatures,
+						},
+					);
 
-			interaction.reply({ embeds: [embed] });
-			break;
-		}
-		case 'role': {
-			const embed = new EmbedBuilder()
-				.setTitle(`Information about role: ${role.name}`)
-				.setColor('Random')
-				.addFields({
-					name: '__Role Information__',
-					value: `
+				return await interaction.reply({ embeds: [embed] });
+			}
+			case 'role': {
+				const role = interaction.options.getRole('role');
+				if (!role) {
+					return await interaction.reply({ content: 'Role not found.', flags: MessageFlags.Ephemeral });
+				}
+
+				const embed = new EmbedBuilder()
+					.setTitle(`Information about role: ${role.name}`)
+					.setColor('Random')
+					.addFields(
+						{
+							name: '__Role Information__',
+							value: `
                 • **Role ID »** ${role.id}
-                • **Role Created »** <t:${role.createdTimestamp}:f>
+                • **Role Created »** <t:${Math.floor(role.createdTimestamp / 1000)}:f>
                 • **Position »** ${role.rawPosition}
                 • **Color »** #${role.color.toString(16)}
-                • **Hoisted? »** ${role.hoist}
+                • **Hoisted? »** ${role.hoist ? 'Yes' : 'No'}
             `,
-				})
-				.addFields({
-					name: `Permissions: [${role.permissions.toArray().length}]`,
-					value: `
-                ${role.permissions.toArray().map((permission) => `${permission}`).join(', ')}
-            `,
-				});
+						},
+						{
+							name: `Permissions: [${role.permissions.toArray().length}]`,
+							value: role.permissions.toArray().length ? role.permissions.toArray().join(', ') : 'None',
+						},
+					);
 
-			interaction.reply({ embeds: [embed] });
-			break;
-		}
-		case 'emotelist': {
-			const emojis = interaction.guild.emojis.cache.map(x => `${x}`).join('') || 'No Emojis is available in this server';
+				return await interaction.reply({ embeds: [embed] });
+			}
+			case 'emotelist': {
+				if (!interaction.guild) {
+					return await interaction.reply({ content: 'This subcommand can only be used in a server.', flags: MessageFlags.Ephemeral });
+				}
 
-			const embed = new EmbedBuilder()
-				.setTitle(`Emote list for ${interaction.guild.name}`)
-				.setColor('Random')
-				.setDescription(`${emojis}`);
+				const emojis = interaction.guild.emojis.cache.map(x => `${x}`).join(' ') || 'No emojis available in this server';
 
-			interaction.reply({ embeds: [embed] });
-			break;
-		}
-		case 'anime': {
-			const embed = new EmbedBuilder()
-				.setColor('Green');
+				const embed = new EmbedBuilder()
+					.setTitle(`Emote list for ${interaction.guild.name}`)
+					.setColor('Random')
+					.setDescription(emojis.length > 4000 ? emojis.slice(0, 4000) + '...' : emojis);
 
-			const result = await kitsu.searchAnime(find.replace(/ ,/g, ' '), 0);
-			if (!result.length) interaction.reply('No result found!');
+				return await interaction.reply({ embeds: [embed] });
+			}
+			case 'anime': {
+				await interaction.deferReply();
+				const find = interaction.options.getString('anime');
 
-			embed.setTitle('Multiple Anime found!');
-			embed.setDescription(`${result.map((x, i) => `**${i + 1}.** ${x.attributes.canonicalTitle}`).join('\n')}\n\n**Please enter the number of the Anime you want to view**\n**Or react with** 🚫 **to cancel the command**`);
-			try {
-				const limitedResults = result.slice(0, 10);
-
-				const optionsArray = limitedResults.map((x, i) => {
-					return {
-						label: x.attributes.canonicalTitle,
-						description: x.attributes.synopsis ? x.attributes.synopsis.substring(0, 100) : 'No description available',
-						value: `${i}`,
-					};
-				});
-
-				const selectMenu = new StringSelectMenuBuilder()
-					.setCustomId('select')
-					.setPlaceholder('Please select anime you want to find.')
-					.setMinValues(1)
-					.setMaxValues(1)
-					.addOptions(optionsArray);
-
-				const bStop = new ButtonBuilder()
-					.setCustomId('stop')
-					.setEmoji('🚫')
-					.setStyle(ButtonStyle.Primary);
-
-				const rowSelectMenu = new ActionRowBuilder().addComponents(selectMenu);
-				const rowButton = new ActionRowBuilder().addComponents(bStop);
-
-				await interaction.reply({ embeds: [embed], components: [rowSelectMenu, rowButton] });
-
-				const filter = i => (i.customId === 'stop' || i.customId === 'select') && i.user.id === interaction.user.id;
-				const collector = interaction.channel.createMessageComponentCollector({ filter, time: 30000 });
-
-				collector.on('collect', async i => {
-					if (i.customId === 'stop') {
-						await i.update({ content: 'Command cancelled!', components: [], embeds: [] });
-						collector.stop();
+				try {
+					const result = await kitsu.searchAnime(find.replace(/ ,/g, ' '), 0);
+					if (!result || !result.length) {
+						return await interaction.editReply({ content: 'No anime found matching your search.' });
 					}
-					else if (i.customId === 'select') {
-						const selectedIndex = parseInt(i.values[0]);
-						const atts = result[selectedIndex];
-						const animeEmbed = new EmbedBuilder();
 
-						animeEmbed.setTitle(atts.attributes.canonicalTitle);
-						animeEmbed.setDescription(atts.attributes.synopsis);
-						animeEmbed.setImage(atts.attributes.posterImage.original);
+					const limitedResults = result.slice(0, 10);
+					const embed = new EmbedBuilder()
+						.setColor('Green')
+						.setTitle('Multiple Anime found!')
+						.setDescription(`${limitedResults.map((x, i) => `**${i + 1}.** ${x.attributes.canonicalTitle}`).join('\n')}\n\n**Select an anime below or click Cancel.**`);
 
-						if (atts.attributes.posterImage.medium) animeEmbed.setThumbnail(atts.attributes.posterImage.medium);
-						if (atts.attributes.titles.en) animeEmbed.addFields({ name: '**__English title__**', value: atts.attributes.titles.en, inline: false });
-						if (atts.attributes.titles.ja_jp) animeEmbed.addFields({ name: '**__Japanese Title__**', value: atts.attributes.titles.ja_jp, inline: false });
-						if (atts.attributes.abbreviatedTitles && atts.attributes.abbreviatedTitles.length > 0) animeEmbed.addFields({ name: '**__Synonyms__**', value: `${atts.attributes.abbreviatedTitles}`, inline: false });
-						if (atts.attributes.episodeCount && atts.attributes.episodeLength) animeEmbed.addFields({ name: '**__Episodes__**', value: atts.attributes.episodeCount + ' @ ' + atts.attributes.episodeLength + ' minutes', inline: false });
-						else if (atts.attributes.episodeCount) animeEmbed.addFields({ name: 'Episodes', value: atts.attributes.episodeCount, inline: false });
+					const optionsArray = limitedResults.map((x, i) => {
+						return {
+							label: x.attributes.canonicalTitle.slice(0, 100),
+							description: (x.attributes.synopsis ? x.attributes.synopsis.slice(0, 95) : 'No description available') + '...',
+							value: `${i}`,
+						};
+					});
 
-						animeEmbed.addFields({ name: '**__Status__**', value: atts.attributes.status, inline: false });
-						animeEmbed.addFields({ name: '**__Age Restrictions__**', value: atts.attributes.ageRating + ' ' + atts.attributes.ageRatingGuide, inline: false });
-						animeEmbed.addFields({ name: '**__Popularity Rank__**', value: '#' + atts.attributes.popularityRank, inline: false });
-						if (atts.attributes.averageRating) {
-							animeEmbed.addFields({ name: '**__Rating Rank__**', value: '#' + atts.attributes.ratingRank, inline: false });
-							animeEmbed.addFields({ name: '**__Rating__**', value: atts.attributes.averageRating, inline: false });
+					const selectMenu = new StringSelectMenuBuilder()
+						.setCustomId('select_anime')
+						.setPlaceholder('Select an anime to view details.')
+						.setMinValues(1)
+						.setMaxValues(1)
+						.addOptions(optionsArray);
+
+					const bStop = new ButtonBuilder()
+						.setCustomId('stop_anime')
+						.setEmoji('🚫')
+						.setLabel('Cancel')
+						.setStyle(ButtonStyle.Secondary);
+
+					const rowSelectMenu = new ActionRowBuilder().addComponents(selectMenu);
+					const rowButton = new ActionRowBuilder().addComponents(bStop);
+
+					const replyMsg = await interaction.editReply({ embeds: [embed], components: [rowSelectMenu, rowButton] });
+
+					const filter = i => (i.customId === 'stop_anime' || i.customId === 'select_anime') && i.user.id === interaction.user.id;
+					const collector = replyMsg.createMessageComponentCollector({ filter, time: 30000 });
+
+					collector.on('collect', async i => {
+						if (i.customId === 'stop_anime') {
+							await i.update({ content: 'Command cancelled.', components: [], embeds: [] });
+							collector.stop('user_cancelled');
 						}
-						if (atts.attributes.startDate && atts.attributes.endDate) animeEmbed.setFooter({ text: atts.attributes.startDate + ' to ' + atts.attributes.endDate });
-						else if (atts.attributes.startDate && !atts.attributes.endDate) animeEmbed.setFooter({ text: atts.attributes.startDate });
-						animeEmbed.setColor('Blue');
+						else if (i.customId === 'select_anime') {
+							const selectedIndex = parseInt(i.values[0]);
+							const atts = limitedResults[selectedIndex];
+							const animeEmbed = new EmbedBuilder()
+								.setTitle(atts.attributes.canonicalTitle)
+								.setDescription(atts.attributes.synopsis ? atts.attributes.synopsis.slice(0, 2048) : 'No synopsis available.')
+								.setColor('Blue');
 
-						await i.update({ embeds: [animeEmbed], components: [] });
-						collector.stop();
-					}
-				});
+							if (atts.attributes.posterImage && atts.attributes.posterImage.original) {
+								animeEmbed.setImage(atts.attributes.posterImage.original);
+							}
+							if (atts.attributes.posterImage && atts.attributes.posterImage.medium) {
+								animeEmbed.setThumbnail(atts.attributes.posterImage.medium);
+							}
+							if (atts.attributes.titles && atts.attributes.titles.en) {
+								animeEmbed.addFields({ name: '**__English title__**', value: atts.attributes.titles.en, inline: false });
+							}
+							if (atts.attributes.titles && atts.attributes.titles.ja_jp) {
+								animeEmbed.addFields({ name: '**__Japanese Title__**', value: atts.attributes.titles.ja_jp, inline: false });
+							}
+							if (atts.attributes.episodeCount) {
+								const epText = atts.attributes.episodeLength ? `${atts.attributes.episodeCount} @ ${atts.attributes.episodeLength} mins` : `${atts.attributes.episodeCount}`;
+								animeEmbed.addFields({ name: '**__Episodes__**', value: epText, inline: true });
+							}
+							if (atts.attributes.status) {
+								animeEmbed.addFields({ name: '**__Status__**', value: atts.attributes.status, inline: true });
+							}
+							if (atts.attributes.averageRating) {
+								animeEmbed.addFields({ name: '**__Rating__**', value: `${atts.attributes.averageRating}%`, inline: true });
+							}
 
-				collector.on('end', collected => {
-					if (collected.size === 0) {
-						interaction.editReply({ content: 'No response, command timed out.', components: [], embeds: [] });
-					}
-				});
-			}
-			catch (e) {
-				console.log(e);
+							await i.update({ embeds: [animeEmbed], components: [] });
+							collector.stop('selected');
+						}
+					});
+
+					collector.on('end', async (_, endReason) => {
+						if (endReason !== 'user_cancelled' && endReason !== 'selected') {
+							await interaction.editReply({ content: 'Command timed out.', components: [], embeds: [] }).catch(() => null);
+						}
+					});
+				}
+				catch (e) {
+					console.error('Error fetching anime information:', e);
+					return await interaction.editReply({ content: `An error occurred while searching: ${e.message}`, components: [], embeds: [] });
+				}
+				break;
 			}
 		}
-		}
-
 	}
 };
