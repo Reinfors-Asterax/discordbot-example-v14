@@ -2,7 +2,7 @@
   "name": "example-bot",
   "version": "1.0.0",
   "scripts": {
-    "start": "node index.js",
+    "start": "node --max-old-space-size=256 index.js",
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --ext .js --fix",
     "test": "npm run lint"
