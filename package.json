@@ -1,23 +1,23 @@
 {
-	"name": "example-bot",
-	"version": "1.0.0",
-	"scripts": {
-		"start": "node index.js",
-		"lint": "eslint . --ext .js",
-		"lint:fix": "eslint . --ext .js --fix",
-		"test": "npm run lint"
-	},
-	"dependencies": {
-		"@discordjs/builders": "1.14.1",
-		"@discordjs/collection": "^1.5.0",
-		"@discordjs/rest": "2.6.3",
-		"common-tags": "^1.8.2",
-		"discord-api-types": "0.37.120",
-		"discord.js": "14.27.0",
-		"dotenv": "16.4.7"
-	},
-	"devDependencies": {
-		"@hazmi35/eslint-config": "^9.0.0",
-		"eslint": "^8.57.0"
-	}
+  "name": "example-bot",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "test": "npm run lint"
+  },
+  "dependencies": {
+    "@discordjs/builders": "1.14.1",
+    "@discordjs/collection": "^1.5.0",
+    "@discordjs/rest": "2.6.3",
+    "common-tags": "^1.8.2",
+    "discord-api-types": "0.37.120",
+    "discord.js": "14.27.0",
+    "dotenv": "16.4.7"
+  },
+  "devDependencies": {
+    "@hazmi35/eslint-config": "^9.0.0",
+    "eslint": "^8.57.0"
+  }
 }
