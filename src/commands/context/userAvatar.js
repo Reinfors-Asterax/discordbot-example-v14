@@ -27,3 +27,4 @@ module.exports = class UserAvatar extends Command {
 		await interaction.reply({ embeds: [embed] });
 	}
 };
+

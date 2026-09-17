@@ -44,3 +44,4 @@ module.exports = class QuoteMessage extends Command {
 		await interaction.reply({ embeds: [embed] });
 	}
 };
+
